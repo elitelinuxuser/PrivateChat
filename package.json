@@ -1,0 +1,10 @@
+{
+  "name": "my_bot",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Lucifer <ramanandsirvi21@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^11.4.2"
+  }
+}
