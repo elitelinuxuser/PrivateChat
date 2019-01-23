@@ -3,6 +3,8 @@ const Discord = require("discord.js");
 const client = new Discord.Client();
 
 const trackUsers = [];
+let privateChannel;
+let categoryExists = false;
 
 const setChannelPassword = (author, channel, password) => {
   return;
@@ -50,13 +52,34 @@ client.on("message", msg => {
   }
 
   if (cmd === `${prefix}pccreate`) {
-    // console.log(msg.author);
     msg.author.send(
       "You have to set password for creating the channel. You can set the password by sending it as a reply to this message"
     );
+    msg.guild.channels.map(category => {
+      if (
+        category.type === "category" &&
+        category.name === "Private Channels"
+      ) {
+        privateChannel = category;
+        categoryExists = true;
+      }
+    });
+    if (!categoryExists) {
+      msg.guild
+        .createChannel("Private Channels", "category")
+        .then(channel => {
+          trackUsers.push({ authorAdded: msg.author, channel });
+          privateChannel = channel;
+          console.log("New category created!");
+        })
+        .catch(console.error);
+    }
+
+    joinedArgs = args.join(" ");
     msg.guild
-      .createChannel(args[0], "text")
+      .createChannel(joinedArgs, "text")
       .then(channel => {
+        channel.setParent(privateChannel);
         trackUsers.push({ authorAdded: msg.author, channel });
       })
       .catch(console.error);
