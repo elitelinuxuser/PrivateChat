@@ -2,19 +2,40 @@ const botconfig = require("./botconfig.json");
 const Discord = require("discord.js");
 const client = new Discord.Client();
 
+const trackUsers = [];
+
+const setChannelPassword = (author, channel, password) => {
+  return;
+};
+
 client.on("ready", () => {
   console.log(
     `Logged in as ${
       client.user.tag
     }! Use command !pchelp to get details about all the available commands.`
   );
-  client.user.setGame("Testing bot");
+  client.user
+    .setActivity("Private Channels", { type: "WATCHING" })
+    .then(presence => console.log(`Rich presense ${presence.status}`))
+    .catch(console.error);
 });
 
 client.on("message", msg => {
   if (msg.author.bot) return;
-  if (msg.channel.type === "dm") return;
-
+  if (msg.channel.type === "dm") {
+    console.log("DM");
+    var i;
+    for (i = 0; i < trackUsers.length; i++) {
+      author = trackUsers[i].authorAdded;
+      channel = trackUsers[i].channel;
+      if (msg.author === author) {
+        password = msg.content;
+        setChannelPassword(author, channel, password);
+        return msg.author.send("Password set for the channel");
+      }
+    }
+    return;
+  }
   const prefix = botconfig.prefix;
   const messageArray = msg.content.split(" ");
   const cmd = messageArray[0];
@@ -29,8 +50,17 @@ client.on("message", msg => {
   }
 
   if (cmd === `${prefix}pccreate`) {
-    console.log(args);
-    msg.guild.createChannel(args[0], "text", [{type: }]);
+    // console.log(msg.author);
+    msg.author.send(
+      "You have to set password for creating the channel. You can set the password by sending it as a reply to this message"
+    );
+    msg.guild
+      .createChannel(args[0], "text")
+      .then(channel => {
+        trackUsers.push({ authorAdded: msg.author, channel });
+      })
+      .catch(console.error);
+
     return msg.channel.send(
       `Channel created successfully! Set a password in the dm that bot sent you`
     );
