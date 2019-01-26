@@ -2,9 +2,8 @@ const botconfig = require("./botconfig.json");
 const Discord = require("discord.js");
 const client = new Discord.Client();
 
-const trackUsers = [];
+let trackUsers = [];
 let privateChannel;
-let categoryExists = false;
 
 const setChannelPassword = (author, channel, password) => {
   return;
@@ -30,9 +29,12 @@ client.on("message", msg => {
     for (i = 0; i < trackUsers.length; i++) {
       author = trackUsers[i].authorAdded;
       channel = trackUsers[i].channel;
-      if (msg.author === author) {
+      passwordSet = trackUsers[i].passwordSet;
+      if (msg.author === author && passwordSet === false) {
         password = msg.content;
+        console.log("Password for channel " + channel.name + " is " + password);
         setChannelPassword(author, channel, password);
+        trackUsers[i].passwordSet = true;
         return msg.author.send("Password set for the channel");
       }
     }
@@ -42,6 +44,7 @@ client.on("message", msg => {
   const messageArray = msg.content.split(" ");
   const cmd = messageArray[0];
   const args = messageArray.slice(1);
+  joinedArgs = args.join(" ");
 
   if (cmd === `${prefix}pchelp`) {
     const botembed = new Discord.RichEmbed()
@@ -52,6 +55,21 @@ client.on("message", msg => {
   }
 
   if (cmd === `${prefix}pccreate`) {
+    let categoryExists = false;
+    let channelExists = false;
+
+    msg.guild.channels.map(channel => {
+      if (joinedArgs === channel.name) {
+        channelExists = true;
+      }
+    });
+
+    if (channelExists) {
+      return msg.channel.send(
+        `Private channel with that name already exists. Please try a unique name for the channel`
+      );
+    }
+
     msg.author.send(
       "You have to set password for creating the channel. You can set the password by sending it as a reply to this message"
     );
@@ -68,19 +86,21 @@ client.on("message", msg => {
       msg.guild
         .createChannel("Private Channels", "category")
         .then(channel => {
-          trackUsers.push({ authorAdded: msg.author, channel });
           privateChannel = channel;
           console.log("New category created!");
         })
         .catch(console.error);
     }
 
-    joinedArgs = args.join(" ");
     msg.guild
       .createChannel(joinedArgs, "text")
       .then(channel => {
         channel.setParent(privateChannel);
-        trackUsers.push({ authorAdded: msg.author, channel });
+        trackUsers.push({
+          authorAdded: msg.author,
+          channel,
+          passwordSet: false
+        });
       })
       .catch(console.error);
 
